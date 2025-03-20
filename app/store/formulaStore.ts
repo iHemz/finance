@@ -1,21 +1,14 @@
 import { create } from "zustand";
 
-export interface Tag {
-  id: string;
-  label: string;
-  type: "variable" | "function" | "constant";
-  value?: number;
-}
-
 interface FormulaState {
-  formula: (Tag | string)[];
+  formula: (Suggestion | string)[];
   cursorPosition: number;
-  suggestions: Tag[];
-  addTag: (tag: Tag) => void;
+  suggestions: Suggestion[];
+  addTag: (tag: Suggestion) => void;
   addOperand: (operand: string) => void;
   deleteFromFormula: () => void;
   setCursorPosition: (position: number) => void;
-  setSuggestions: (suggestions: Tag[]) => void;
+  setSuggestions: (suggestions: Suggestion[]) => void;
   moveCursorLeft: () => void;
   moveCursorRight: () => void;
   evaluateFormula: () => number | null;
@@ -26,8 +19,8 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
   cursorPosition: 0,
   suggestions: [],
 
-  addTag: (tag) =>
-    set((state) => {
+  addTag: tag =>
+    set(state => {
       const newFormula = [...state.formula];
       newFormula.splice(state.cursorPosition, 0, tag);
       return {
@@ -36,8 +29,8 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
       };
     }),
 
-  addOperand: (operand) =>
-    set((state) => {
+  addOperand: operand =>
+    set(state => {
       const newFormula = [...state.formula];
       newFormula.splice(state.cursorPosition, 0, operand);
       return {
@@ -47,7 +40,7 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
     }),
 
   deleteFromFormula: () =>
-    set((state) => {
+    set(state => {
       if (state.cursorPosition === 0) return state;
 
       const newFormula = [...state.formula];
@@ -59,17 +52,17 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
       };
     }),
 
-  setCursorPosition: (position) => set({ cursorPosition: position }),
+  setCursorPosition: position => set({ cursorPosition: position }),
 
-  setSuggestions: (suggestions) => set({ suggestions }),
+  setSuggestions: suggestions => set({ suggestions }),
 
   moveCursorLeft: () =>
-    set((state) => ({
+    set(state => ({
       cursorPosition: Math.max(0, state.cursorPosition - 1),
     })),
 
   moveCursorRight: () =>
-    set((state) => ({
+    set(state => ({
       cursorPosition: Math.min(state.formula.length, state.cursorPosition + 1),
     })),
 
@@ -79,7 +72,7 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
     try {
       // Simple evaluation logic (to be expanded)
       const expressionString = formula
-        .map((item) => {
+        .map(item => {
           if (typeof item === "string") return item;
           // For tags, use their value or 0 if undefined
           return item.value !== undefined ? item.value : 0;

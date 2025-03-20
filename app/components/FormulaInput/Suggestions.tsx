@@ -1,12 +1,11 @@
-import { Tag } from "@/app/store/formulaStore";
 import { Loader, Paper, Text } from "@mantine/core";
 import React from "react";
 
 interface SuggestionsProps {
-  suggestions: Tag[];
+  suggestions: Suggestion[];
   isLoading: boolean;
   isError: boolean;
-  onSelectSuggestion: (suggestion: Tag) => void;
+  onSelectSuggestion: (suggestion: Suggestion) => void;
   position: { top: number; left: number };
   visible: boolean;
 }
@@ -73,17 +72,12 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
                   height: "10px",
                   borderRadius: "50%",
                   marginRight: "8px",
-                  backgroundColor:
-                    suggestion.type === "variable"
-                      ? "blue"
-                      : suggestion.type === "function"
-                        ? "green"
-                        : "orange",
+                  backgroundColor: "blue",
                 }}
               />
-              <Text size="sm">{suggestion.label}</Text>
+              <Text size="sm">{suggestion.name}</Text>
               <Text size="xs" color="dimmed" ml="auto">
-                {suggestion.type}
+                {suggestion.category}
               </Text>
             </div>
           ))}

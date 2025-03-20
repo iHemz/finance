@@ -1,8 +1,9 @@
 import { Providers } from "@/app/providers";
-import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
+import { ColorSchemeScript } from "@mantine/core";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
+import AppShellLayout from "@/app/components/AppShell/AppShell";
 import "@mantine/core/styles.css";
 
 const inter = Inter({
@@ -22,13 +23,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" {...mantineHtmlProps}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <ColorSchemeScript />
       </head>
       <body>
         <main className={inter.variable}>
-          <Providers>{children}</Providers>
+          <Providers>
+            <AppShellLayout>{children}</AppShellLayout>
+          </Providers>
         </main>
       </body>
     </html>

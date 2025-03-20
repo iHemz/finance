@@ -1,32 +1,27 @@
 "use client";
 
 import { FormulaInput } from "@/app/components/FormulaInput";
-import { Tag } from "@/app/store/formulaStore";
-import { Box, Code, Container, Text, Title } from "@mantine/core";
+import { Box, Code, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 
 export default function Home() {
   const [result, setResult] = useState<number | null>(null);
-  const [formula, setFormula] = useState<(Tag | string)[]>([]);
+  const [formula, setFormula] = useState<(Suggestion | string)[]>([]);
 
   // Format the formula for display
-  const formatFormula = (formula: (Tag | string)[]) => {
+  const formatFormula = (formula: (Suggestion | string)[]) => {
     return formula
       .map(item => {
         if (typeof item === "string") {
           return item;
         }
-        return item.label;
+        return item.name;
       })
       .join(" ");
   };
 
   return (
-    <Container size="md" py="xl">
-      <Title order={1} mb="md">
-        Causal-Style Formula Input
-      </Title>
-
+    <Stack gap="sm" h="100%">
       <Text mb="lg">
         Type to show suggestions. Use operators (+, -, *, /, ^, (, )) between tags. Press Enter to
         evaluate the formula.
@@ -55,6 +50,6 @@ export default function Home() {
           </Code>
         </Box>
       )}
-    </Container>
+    </Stack>
   );
 }

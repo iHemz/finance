@@ -1,13 +1,13 @@
 import { Suggestions } from "@/app/components/FormulaInput/Suggestions";
 import { TagComponent } from "@/app/components/FormulaInput/TagComponent";
 import { useSuggestions } from "@/app/hooks/useSuggestions";
-import { Tag, useFormulaStore } from "@/app/store/formulaStore";
-import { Paper, Text } from "@mantine/core";
+import { useFormulaStore } from "@/app/store/formulaStore";
+import { Paper, Text, TextInput } from "@mantine/core";
 import React, { useEffect, useRef, useState } from "react";
 
 interface FormulaInputProps {
   placeholder?: string;
-  onChange?: (formula: (Tag | string)[]) => void;
+  onChange?: (formula: (Suggestion | string)[]) => void;
   onEvaluate?: (result: number | null) => void;
 }
 
@@ -148,7 +148,7 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
   };
 
   // Handle selecting a suggestion
-  const handleSelectSuggestion = (suggestion: Tag) => {
+  const handleSelectSuggestion = (suggestion: Suggestion) => {
     addTag(suggestion);
     setInputValue("");
     setShowSuggestions(false);
@@ -223,7 +223,7 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
         {renderFormulaContent()}
 
         {/* Fake input to capture user typing */}
-        <input
+        <TextInput
           type="text"
           value={inputValue}
           onChange={handleChange}

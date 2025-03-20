@@ -1,35 +1,20 @@
-import { Tag } from "@/app/store/formulaStore";
 import { ActionIcon, Menu } from "@mantine/core";
 import React, { useState } from "react";
 
 interface TagComponentProps {
-  tag: Tag;
+  tag: Suggestion;
   onDelete: () => void;
 }
 
 export const TagComponent: React.FC<TagComponentProps> = ({ tag, onDelete }) => {
   const [menuOpened, setMenuOpened] = useState(false);
 
-  // Determine tag color based on type
-  const getTagColor = () => {
-    switch (tag.type) {
-      case "variable":
-        return "blue";
-      case "function":
-        return "green";
-      case "constant":
-        return "orange";
-      default:
-        return "gray";
-    }
-  };
-
   return (
     <div
       style={{
         display: "inline-flex",
         alignItems: "center",
-        backgroundColor: getTagColor(),
+        backgroundColor: "blue",
         color: "white",
         borderRadius: "4px",
         padding: "2px 4px",
@@ -40,7 +25,7 @@ export const TagComponent: React.FC<TagComponentProps> = ({ tag, onDelete }) => 
         position: "relative",
       }}
     >
-      <span>{tag.label}</span>
+      <span>{tag.name}</span>
 
       {/* Dropdown menu */}
       <Menu
