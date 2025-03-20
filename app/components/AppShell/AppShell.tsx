@@ -32,7 +32,7 @@ const AppShellLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
           <Title>Causal-Style Formula Input</Title>
         </Group>
       </AppShellHeader>
-      <AppShellNavbar p="md" bg="black">
+      <AppShellNavbar p="md" bg="dark.8">
         <AppShellSection>
           <Title>Lucid Dreams</Title>
         </AppShellSection>

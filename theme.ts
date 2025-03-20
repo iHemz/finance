@@ -119,6 +119,7 @@ export const theme = createTheme({
     Container: {
       defaultProps: {
         p: "md",
+        bg: "black",
         fluid: true,
         h: "100%",
         mih: "100%",

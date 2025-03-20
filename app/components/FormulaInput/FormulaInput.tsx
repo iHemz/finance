@@ -26,6 +26,8 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
   const inputRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
 
+  console.log("inputValue ", inputValue, " inputRef ", inputRef);
+
   // Get formula state from Zustand store
   const {
     formula,
