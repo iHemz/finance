@@ -103,32 +103,29 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
 
   // Handle key presses
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Handle special keys
-    switch (e.key) {
-      case "Backspace":
+    const actions: Record<string, () => void> = {
+      backspace: () => {
         e.preventDefault();
         if (inputValue) {
           setInputValue(inputValue.slice(0, -1));
+          deleteFromFormula();
         } else {
           deleteFromFormula();
         }
-        break;
-
-      case "ArrowLeft":
+      },
+      arrowleft: () => {
         e.preventDefault();
         if (inputValue) {
           setInputValue(inputValue.slice(0, -1));
         } else {
           moveCursorLeft();
         }
-        break;
-
-      case "ArrowRight":
+      },
+      arrowright: () => {
         e.preventDefault();
         moveCursorRight();
-        break;
-
-      case "Enter":
+      },
+      enter: () => {
         e.preventDefault();
         if (showSuggestions && suggestions.length > 0) {
           handleSelectSuggestion(suggestions[0]);
@@ -138,47 +135,28 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
             onEvaluate(result);
           }
         }
-        break;
-
-      case "Escape":
+      },
+      escape: () => {
         e.preventDefault();
         setShowSuggestions(false);
         setInputValue("");
-        break;
-
-      case "+":
-      case "-":
-      case "*":
-      case "/":
-      case "(":
-      case ")":
-      case "^":
-        e.preventDefault();
-        addOperand(e.key);
-        setInputValue("");
-        break;
-
-      default:
-        // Allow typing numbers directly
-        if (/^[0-9]$/.test(e.key)) {
+      },
+      default: () => {
+        if (/^[a-zA-Z0-9]$/.test(e.key)) {
           e.preventDefault();
           addOperand(e.key);
-          return;
-        }
-
-        // For alphabetic characters, add to inputValue (for variable names/suggestions)
-        if (/^[a-zA-Z]$/.test(e.key)) {
-          e.preventDefault();
           setInputValue(inputValue + e.key);
           setShowSuggestions(true);
-          return;
-        }
-
-        // For other keys, update inputValue for autocomplete
-        if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+        } else if (["+", "-", "*", "/", "(", ")", "^", "%"].includes(e.key)) {
+          e.preventDefault();
+          addOperand(e.key);
+          setInputValue("");
+        } else if (!e.ctrlKey && !e.altKey && !e.metaKey) {
           setShowSuggestions(true);
-        }
-    }
+        } else return;
+      },
+    };
+    actions[e.key.toLowerCase()]?.() ?? actions["default"]();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -276,7 +254,6 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
             </span>
           );
         } else {
-          // It's a number
           return (
             <span
               key={`operand-${index}`}
@@ -330,7 +307,6 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
         onKeyDown={handleKeyDown}
       >
         {renderFormulaContent()}
-        {inputValue && <Text>{inputValue}</Text>}
 
         <TextInput
           type="text"

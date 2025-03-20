@@ -22,10 +22,17 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
   addTag: tag =>
     set(state => {
       const newFormula = [...state.formula];
-      newFormula.splice(state.cursorPosition, 0, tag);
+      // Find the last operand in the formula
+      const lastOperandIndex = newFormula.findLastIndex(
+        item => typeof item === "string" && ["+", "-", "*", "/", "(", ")", "^"].includes(item)
+      );
+
+      const deleteCount = newFormula.length - lastOperandIndex - 1;
+      const tempCursorPosition = state.cursorPosition - deleteCount;
+      newFormula.splice(tempCursorPosition, deleteCount, tag);
       return {
         formula: newFormula,
-        cursorPosition: state.cursorPosition + 1,
+        cursorPosition: tempCursorPosition + 1,
       };
     }),
 
@@ -36,10 +43,10 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
 
       // Check if we're adding a number after another number
       if (
-        /^[0-9]$/.test(operand) &&
+        /^[a-zA-Z0-9]$/.test(operand) &&
         cursorPos > 0 &&
         typeof newFormula[cursorPos - 1] === "string" &&
-        /^[0-9]+$/.test(newFormula[cursorPos - 1] as string)
+        /^[a-zA-Z0-9]+$/.test(newFormula[cursorPos - 1] as string)
       ) {
         // Combine with the previous number
         newFormula[cursorPos - 1] = newFormula[cursorPos - 1] + operand;
@@ -65,7 +72,7 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
       const itemToDelete = newFormula[state.cursorPosition - 1];
 
       // If it's a multi-digit number, delete just the last digit
-      if (typeof itemToDelete === "string" && /^[0-9]{2,}$/.test(itemToDelete)) {
+      if (typeof itemToDelete === "string" && /^[a-zA-Z0-9]{2,}$/.test(itemToDelete)) {
         // Remove the last digit only
         newFormula[state.cursorPosition - 1] = itemToDelete.slice(0, -1);
         return {
