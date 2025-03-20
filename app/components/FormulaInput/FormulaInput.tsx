@@ -2,7 +2,7 @@ import { Suggestions } from "@/app/components/FormulaInput/Suggestions";
 import { TagComponent } from "@/app/components/FormulaInput/TagComponent";
 import { useSuggestions } from "@/app/hooks/useSuggestions";
 import { useFormulaStore } from "@/app/store/formulaStore";
-import { Paper, Text, TextInput } from "@mantine/core";
+import { Box, Paper, Text, TextInput } from "@mantine/core";
 import React, { useEffect, useRef, useState } from "react";
 
 interface FormulaInputProps {
@@ -25,8 +25,7 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
   });
   const inputRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
-
-  console.log("inputValue ", inputValue, " inputRef ", inputRef);
+  const fakeInputRef = useRef<HTMLInputElement | null>(null);
 
   // Get formula state from Zustand store
   const {
@@ -129,12 +128,12 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
         break;
 
       default:
+        addOperand(e.key);
         // Allow typing numbers directly
-        if (/^[0-9]$/.test(e.key)) {
-          e.preventDefault();
-          addOperand(e.key);
-          return;
-        }
+        // if (/^[0-9]$/.test(e.key)) {
+        //   e.preventDefault();
+        //   return;
+        // }
 
         // For other keys, update inputValue for autocomplete
         if (!e.ctrlKey && !e.altKey && !e.metaKey) {
@@ -149,11 +148,18 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
     setShowSuggestions(true);
   };
 
+  const handleInputFocus = () => {
+    if (fakeInputRef.current) {
+      fakeInputRef.current.focus();
+    }
+  };
+
   // Handle selecting a suggestion
   const handleSelectSuggestion = (suggestion: Suggestion) => {
     addTag(suggestion);
     setInputValue("");
     setShowSuggestions(false);
+    handleInputFocus();
   };
 
   // Handle clicking on the input area
@@ -168,6 +174,7 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
 
       setCursorPosition(newPosition);
     }
+    handleInputFocus();
   };
 
   // Render formula content
@@ -201,7 +208,7 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
   };
 
   return (
-    <div style={{ position: "relative" }}>
+    <Box style={{ position: "relative" }}>
       <Paper
         ref={inputRef}
         p="sm"
@@ -227,9 +234,9 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
         {/* Fake input to capture user typing */}
         <TextInput
           type="text"
+          ref={fakeInputRef}
           value={inputValue}
           onChange={handleChange}
-          onKeyDown={handleKeyDown}
           style={{
             position: "absolute",
             opacity: 0,
@@ -274,6 +281,6 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
           }
         }
       `}</style>
-    </div>
+    </Box>
   );
 };
