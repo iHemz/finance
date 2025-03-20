@@ -16,7 +16,6 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
   onChange,
   onEvaluate,
 }) => {
-  // Local state
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionsPosition, setSuggestionsPosition] = useState({
@@ -26,8 +25,8 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
   const inputRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
   const fakeInputRef = useRef<HTMLInputElement | null>(null);
+  const itemRefs = useRef<Array<HTMLSpanElement | HTMLDivElement | null>>([]);
 
-  // Get formula state from Zustand store
   const {
     formula,
     cursorPosition,
@@ -40,29 +39,61 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
     moveCursorRight,
   } = useFormulaStore();
 
-  // Get suggestions based on current input
   const { data: suggestions = [], isLoading, isError } = useSuggestions(inputValue);
 
-  // Update parent component with formula changes
   useEffect(() => {
-    if (onChange) {
-      onChange(formula);
-    }
+    onChange?.(formula);
   }, [formula, onChange]);
 
-  // Update cursor position visually
   useEffect(() => {
-    if (cursorRef.current) {
-      cursorRef.current.style.left = `${cursorPosition * 8}px`;
-    }
-  }, [cursorPosition]);
+    if (!inputRef.current || !cursorRef.current) return;
 
-  // Position suggestions dropdown below cursor
+    const container = inputRef.current;
+    const styles = getComputedStyle(container);
+    const paddingLeft = parseFloat(styles.paddingLeft) || 0;
+
+    const items = itemRefs.current.slice(0, cursorPosition);
+    const itemWidths = items.map(el => el?.offsetWidth || 0);
+
+    // Only add margin for tags, not for numbers or operators
+    const totalItemsWidth = itemWidths.reduce((sum, width, idx) => {
+      const item = formula[idx];
+      // Add margin for tags but not for numbers or operators
+      const margin = typeof item !== "string" ? 6 : 1;
+      return sum + width + margin;
+    }, 0);
+
+    // Only add gaps between different types (tag vs number vs operator)
+    let gaps = 0;
+    for (let i = 1; i < cursorPosition; i++) {
+      const prevItem = formula[i - 1];
+      const currItem = formula[i];
+
+      // If we're transitioning between different types, add a small gap
+      if (typeof prevItem !== typeof currItem) {
+        gaps += 4;
+      } else if (typeof prevItem === "string" && typeof currItem === "string") {
+        // For operators next to numbers, add a very small gap
+        if (
+          (["+", "-", "*", "/", "(", ")", "^"].includes(prevItem) &&
+            !["+", "-", "*", "/", "(", ")", "^"].includes(currItem)) ||
+          (["+", "-", "*", "/", "(", ")", "^"].includes(currItem) &&
+            !["+", "-", "*", "/", "(", ")", "^"].includes(prevItem))
+        ) {
+          gaps += 1;
+        }
+      }
+    }
+
+    const totalWidth = totalItemsWidth + gaps + paddingLeft;
+
+    cursorRef.current.style.left = `${totalWidth}px`;
+  }, [cursorPosition, formula]);
+
   useEffect(() => {
     if (inputRef.current && cursorRef.current && showSuggestions) {
       const inputRect = inputRef.current.getBoundingClientRect();
       const cursorRect = cursorRef.current.getBoundingClientRect();
-
       setSuggestionsPosition({
         top: cursorRect.bottom - inputRect.top,
         left: cursorRect.left - inputRect.left,
@@ -128,12 +159,20 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
         break;
 
       default:
-        addOperand(e.key);
         // Allow typing numbers directly
-        // if (/^[0-9]$/.test(e.key)) {
-        //   e.preventDefault();
-        //   return;
-        // }
+        if (/^[0-9]$/.test(e.key)) {
+          e.preventDefault();
+          addOperand(e.key);
+          return;
+        }
+
+        // For alphabetic characters, add to inputValue (for variable names/suggestions)
+        if (/^[a-zA-Z]$/.test(e.key)) {
+          e.preventDefault();
+          setInputValue(inputValue + e.key);
+          setShowSuggestions(true);
+          return;
+        }
 
         // For other keys, update inputValue for autocomplete
         if (!e.ctrlKey && !e.altKey && !e.metaKey) {
@@ -142,19 +181,15 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
     }
   };
 
-  // Handle typing in the input
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     setShowSuggestions(true);
   };
 
   const handleInputFocus = () => {
-    if (fakeInputRef.current) {
-      fakeInputRef.current.focus();
-    }
+    fakeInputRef.current?.focus();
   };
 
-  // Handle selecting a suggestion
   const handleSelectSuggestion = (suggestion: Suggestion) => {
     addTag(suggestion);
     setInputValue("");
@@ -162,22 +197,64 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
     handleInputFocus();
   };
 
-  // Handle clicking on the input area
   const handleInputClick = (e: React.MouseEvent) => {
     if (inputRef.current) {
-      const rect = inputRef.current.getBoundingClientRect();
+      const container = inputRef.current;
+      const rect = container.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
 
-      // Approximate position based on click
-      const approxPosition = Math.round(clickX / 8);
-      const newPosition = Math.max(0, Math.min(formula.length, approxPosition));
+      const styles = getComputedStyle(container);
+      const paddingLeft = parseFloat(styles.paddingLeft) || 0;
+
+      const cumulativeWidths: number[] = [paddingLeft];
+      for (let i = 0; i < formula.length; i++) {
+        const element = itemRefs.current[i];
+        const width = element?.offsetWidth || 0;
+        const item = formula[i];
+
+        // Determine gap based on item type
+        let gap = 0;
+        if (i > 0) {
+          const prevItem = formula[i - 1];
+
+          // If we're transitioning between different types, add a small gap
+          if (typeof prevItem !== typeof item) {
+            gap = 4;
+          } else if (typeof prevItem === "string" && typeof item === "string") {
+            // For operators next to numbers, add a very small gap
+            if (
+              (["+", "-", "*", "/", "(", ")", "^"].includes(prevItem) &&
+                !["+", "-", "*", "/", "(", ")", "^"].includes(item)) ||
+              (["+", "-", "*", "/", "(", ")", "^"].includes(item) &&
+                !["+", "-", "*", "/", "(", ")", "^"].includes(prevItem))
+            ) {
+              gap = 1;
+            }
+          }
+        }
+
+        // Add margin for tags but not for numbers or operators
+        const margin = typeof item !== "string" ? 6 : 0;
+        cumulativeWidths.push(cumulativeWidths[i] + width + gap + margin);
+      }
+
+      let newPosition = 0;
+      for (let k = 0; k < cumulativeWidths.length - 1; k++) {
+        const start = cumulativeWidths[k];
+        const end = cumulativeWidths[k + 1];
+        if (clickX >= start && clickX < end) {
+          const midpoint = (start + end) / 2;
+          newPosition = clickX < midpoint ? k : k + 1;
+          break;
+        }
+        newPosition = cumulativeWidths.length - 1;
+      }
 
       setCursorPosition(newPosition);
+      handleInputFocus();
     }
-    handleInputFocus();
   };
 
-  // Render formula content
   const renderFormulaContent = () => {
     if (formula.length === 0) {
       return <Text color="dimmed">{placeholder}</Text>;
@@ -185,17 +262,40 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
 
     return formula.map((item, index) => {
       if (typeof item === "string") {
-        // Render operands and numbers
-        return (
-          <span key={`operand-${index}`} style={{ margin: "0 3px" }}>
-            {item}
-          </span>
-        );
+        // Check if it's an operator
+        if (["+", "-", "*", "/", "(", ")", "^"].includes(item)) {
+          return (
+            <span
+              key={`operand-${index}`}
+              ref={el => {
+                itemRefs.current[index] = el;
+              }}
+              style={{ margin: "0" }}
+            >
+              {item}
+            </span>
+          );
+        } else {
+          // It's a number
+          return (
+            <span
+              key={`operand-${index}`}
+              ref={el => {
+                itemRefs.current[index] = el;
+              }}
+              style={{ margin: "0" }}
+            >
+              {item}
+            </span>
+          );
+        }
       } else {
-        // Render tags with dropdown
         return (
           <TagComponent
             key={`tag-${item.id}-${index}`}
+            ref={el => {
+              itemRefs.current[index] = el;
+            }}
             tag={item}
             onDelete={() => {
               setCursorPosition(index);
@@ -230,8 +330,8 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
         onKeyDown={handleKeyDown}
       >
         {renderFormulaContent()}
+        {inputValue && <Text>{inputValue}</Text>}
 
-        {/* Fake input to capture user typing */}
         <TextInput
           type="text"
           ref={fakeInputRef}
@@ -245,7 +345,6 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
           autoFocus
         />
 
-        {/* Cursor */}
         <span
           ref={cursorRef}
           style={{
@@ -259,7 +358,6 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
         />
       </Paper>
 
-      {/* Suggestions dropdown */}
       <Suggestions
         suggestions={suggestions}
         isLoading={isLoading}
@@ -269,7 +367,6 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
         visible={showSuggestions && inputValue.length > 0}
       />
 
-      {/* Add global styles for cursor blink animation */}
       <style jsx global>{`
         @keyframes blink {
           0%,
