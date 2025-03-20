@@ -1,4 +1,4 @@
-import { Loader, Paper, Text } from "@mantine/core";
+import { Box, Button, Group, Loader, Paper, Stack, Text } from "@mantine/core";
 import React from "react";
 
 interface SuggestionsProps {
@@ -35,9 +35,9 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
       }}
     >
       {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "10px" }}>
+        <Box style={{ display: "flex", justifyContent: "center", padding: "10px" }}>
           <Loader size="sm" />
-        </div>
+        </Box>
       ) : isError ? (
         <Text color="red" size="sm">
           Error loading suggestions
@@ -47,41 +47,18 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
           No suggestions found
         </Text>
       ) : (
-        <div>
-          {suggestions.map(suggestion => (
-            <div
-              key={suggestion.id}
-              onClick={() => onSelectSuggestion(suggestion)}
-              style={{
-                padding: "6px 10px",
-                cursor: "pointer",
-                borderRadius: "4px",
-                display: "flex",
-                alignItems: "center",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = "#f1f3f5";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              <div
-                style={{
-                  width: "10px",
-                  height: "10px",
-                  borderRadius: "50%",
-                  marginRight: "8px",
-                  backgroundColor: "blue",
-                }}
-              />
-              <Text size="sm">{suggestion.name}</Text>
-              <Text size="xs" color="dimmed" ml="auto">
-                {suggestion.category}
-              </Text>
-            </div>
+        <Stack w="100%">
+          {suggestions.map((suggestion, i) => (
+            <Button w="100%" key={i} onClick={() => onSelectSuggestion(suggestion)}>
+              <Group justify="space-between">
+                <Text size="sm">{suggestion.name}</Text>
+                <Text size="xs" color="dimmed" ml="auto">
+                  {suggestion.category}
+                </Text>
+              </Group>
+            </Button>
           ))}
-        </div>
+        </Stack>
       )}
     </Paper>
   );
