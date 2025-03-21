@@ -1,30 +1,49 @@
-import withBundleAnalyzer from "@next/bundle-analyzer";
-import type { NextConfig } from "next";
+/** @type {import('next').NextConfig} */
 
-const isAnalyzeEnabled = process.env.ANALYZE === "true";
+import { NextConfig } from "next";
+
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
+
+const path = require("path");
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  webpack: (config, { dev, isServer }) => {
-    // Optimize webpack cache serialization
-    if (!dev) {
-      config.cache = {
-        ...config.cache,
-        type: "filesystem",
-        cacheDirectory: ".next/cache",
-        // Store large strings as Buffers
-        serialize: {
-          buffer: true, // Use Buffer for large strings
-        },
-      };
-    }
+  async headers() {
+    return [
+      {
+        source: "/:all*(woff|woff2|ttf|otf)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
+  },
+  sassOptions: {
+    includePaths: [path.join(__dirname, "styles")],
+  },
+  reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: ["@mantine/core", "@mantine/hooks", "@mantine/form"],
+  },
+  modularizeImports: {
+    "@tabler/icons-react": {
+      transform: "@tabler/icons-react/dist/esm/icons/{{member}}",
+    },
+  },
+  transpilePackages: ["@tabler/icons-react"],
+  webpack: config => {
+    // Exclude parsing of large, unchanging dependencies like moment.js
+    config.module.noParse = [require.resolve("typescript/lib/typescript.js")];
+
     return config;
+  },
+  images: {
+    domains: ["lh3.googleusercontent.com", "img.propelauth.com", "avatars.githubusercontent.com"],
   },
 };
 
-// Configure the bundle analyzer
-const analyzedConfig = withBundleAnalyzer({
-  enabled: isAnalyzeEnabled,
-})(nextConfig);
-
-export default analyzedConfig;
+module.exports = withBundleAnalyzer(nextConfig);

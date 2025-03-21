@@ -1,7 +1,9 @@
 "use client";
 
+import { EvaluationTable } from "@/app/components/EvaluationTable";
 import { FormulaInput } from "@/app/components/FormulaInput";
-import { Box, Code, Stack, Text } from "@mantine/core";
+import { SaveEvaluationModal } from "@/app/components/SaveEvaluationModal";
+import { Box, Code, Divider, Group, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 
 export default function Home() {
@@ -20,6 +22,11 @@ export default function Home() {
       .join(" ");
   };
 
+  const handleSave = () => {
+    // Reset result after saving
+    setResult(null);
+  };
+
   return (
     <Stack gap="sm" h="100%">
       <Text mb="lg">
@@ -35,6 +42,10 @@ export default function Home() {
         />
       </Box>
 
+      <Group mb="md">
+        <SaveEvaluationModal onSave={handleSave} />
+      </Group>
+
       {formula.length > 0 && (
         <Box mb="md">
           <Text fw={500}>Current Formula:</Text>
@@ -43,13 +54,17 @@ export default function Home() {
       )}
 
       {result !== null && (
-        <Box>
+        <Box mb="xl">
           <Text fw={500}>Result:</Text>
           <Code color="green" block>
             {result}
           </Code>
         </Box>
       )}
+
+      <Divider my="lg" />
+
+      <EvaluationTable />
     </Stack>
   );
 }

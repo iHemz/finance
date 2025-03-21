@@ -37,9 +37,38 @@ export const FormulaInput: React.FC<FormulaInputProps> = ({
     evaluateFormula,
     moveCursorLeft,
     moveCursorRight,
+    evaluations,
   } = useFormulaStore();
 
-  const { data: suggestions = [], isLoading, isError } = useSuggestions(inputValue);
+  const { data: apiSuggestions = [], isLoading, isError } = useSuggestions(inputValue);
+
+  // Combine API suggestions with variables from evaluations
+  const allSuggestions = [...apiSuggestions];
+
+  // Add variables from evaluations to suggestions
+  if (inputValue) {
+    const matchingEvaluations = evaluations.filter(ev =>
+      ev.name.toLowerCase().includes(inputValue.toLowerCase())
+    );
+
+    matchingEvaluations.forEach(ev => {
+      // Add each evaluation as a suggestion
+      allSuggestions.push({
+        id: `var-${ev.id}`,
+        name: ev.name,
+        category: `Variable: ${ev.value}`,
+        value: (ev.value || 0).toString(),
+        type: "variable",
+      });
+    });
+  }
+
+  // Sort suggestions - variables first, then API suggestions
+  const suggestions = allSuggestions.sort((a, b) => {
+    if (a.type === "variable" && b.type !== "variable") return -1;
+    if (a.type !== "variable" && b.type === "variable") return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   useEffect(() => {
     onChange?.(formula);

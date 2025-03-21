@@ -1,9 +1,18 @@
 import { create } from "zustand";
 
+interface Evaluation {
+  id: string;
+  name: string;
+  formula: (Suggestion | string)[];
+  value: number | null;
+  createdAt: Date;
+}
+
 interface FormulaState {
   formula: (Suggestion | string)[];
   cursorPosition: number;
   suggestions: Suggestion[];
+  evaluations: Evaluation[];
   addTag: (tag: Suggestion) => void;
   addOperand: (operand: string) => void;
   deleteFromFormula: () => void;
@@ -12,12 +21,17 @@ interface FormulaState {
   moveCursorLeft: () => void;
   moveCursorRight: () => void;
   evaluateFormula: () => number | null;
+  saveEvaluation: (name: string) => void;
+  getEvaluationById: (id: string) => Evaluation | undefined;
+  deleteEvaluation: (id: string) => void;
+  clearFormula: () => void;
 }
 
 export const useFormulaStore = create<FormulaState>((set, get) => ({
   formula: [],
   cursorPosition: 0,
   suggestions: [],
+  evaluations: [],
 
   addTag: tag =>
     set(state => {
@@ -123,5 +137,41 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
       console.error("Error evaluating formula:", error);
       return null;
     }
+  },
+
+  saveEvaluation: name => {
+    const state = get();
+    const result = state.evaluateFormula();
+
+    const newEvaluation: Evaluation = {
+      id: Date.now().toString(),
+      name,
+      formula: [...state.formula],
+      value: result,
+      createdAt: new Date(),
+    };
+
+    set(state => ({
+      evaluations: [...state.evaluations, newEvaluation],
+    }));
+
+    return newEvaluation;
+  },
+
+  getEvaluationById: id => {
+    return get().evaluations.find(evaluation => evaluation.id === id);
+  },
+
+  deleteEvaluation: id => {
+    set(state => ({
+      evaluations: state.evaluations.filter(evaluation => evaluation.id !== id),
+    }));
+  },
+
+  clearFormula: () => {
+    set({
+      formula: [],
+      cursorPosition: 0,
+    });
   },
 }));
