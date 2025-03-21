@@ -38,7 +38,7 @@ export const useFormulaStore = create<FormulaState>((set, get) => ({
       const newFormula = [...state.formula];
       // Find the last operand in the formula
       const lastOperandIndex = newFormula.findLastIndex(
-        item => typeof item === "string" && ["+", "-", "*", "/", "(", ")", "^"].includes(item)
+        item => typeof item === "string" && ["+", "-", "*", "/", "(", ")", "^", "%"].includes(item)
       );
 
       const deleteCount = newFormula.length - lastOperandIndex - 1;
